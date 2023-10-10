@@ -1,0 +1,293 @@
+
+#include <Servo.h>
+Servo myServo;
+int pushButton = 6;
+const int servoPin = 7;
+const int IR_pin = 2;
+const int pinR = 9;
+const int pinG = 10;
+const int pinB = 11;
+
+//ID: 24785521
+int A = 3000;
+int B = 6000;
+int C = 8000;
+int adminState = 0; // serial monitor 
+
+int angle = 90;
+int startAngle = 90; //
+int stopAngle = 180; //
+int MOVING_TIME = 10000; // moving time is 10 seconds// this is the time it takes to go from 90-180 and vice versa
+int STOP_TIME = C;  // time to stop at 0 degrees (10 seconds)
+unsigned long moveStartTime;
+unsigned long stopStartTime;
+
+bool waitStarted = false;//required to excute the funtion
+unsigned long startMillis = millis();
+bool waitStartedB = false; //required to excute the funtion
+unsigned long startMillisB = millis();
+
+int state = 0;
+
+bool PedButtonPressed = false;
+
+
+
+void setup() {
+  pinMode(pinR,   OUTPUT);
+  pinMode(pinG, OUTPUT);
+  pinMode(pinB,  OUTPUT);
+  digitalWrite(pinR, LOW);
+  digitalWrite(pinG, LOW);
+  digitalWrite(pinB, LOW);
+  // servo
+  myServo.attach(servoPin);
+  //IR to imput values
+  pinMode(IR_pin, INPUT);
+   //IR to imput values
+  pinMode(pushButton, INPUT);
+  moveStartTime = millis(); // start moving
+  Serial.begin(9600);
+  Serial.println();
+  Serial.println("Hey There! Welcome to the Login Portal, please enter  password to access the Administerator  Menu."); // pop up when serial monitor open, prompting user to enter password.
+
+}
+
+void loop() {
+  unsigned long currentMillis = millis();
+  unsigned long progress = currentMillis - moveStartTime;
+  int val = digitalRead(IR_pin); 
+  int readpushButton = digitalRead(pushButton);
+
+  /*if (state == 0 && readpushButton == 1){
+    //if (waitMillis(3000)) {
+      statusLight (LOW, LOW, HIGH);
+      Serial.println (" nlue");
+    //}
+    }*/
+  /*
+    if (readpushButton == 1){
+      if (state == 0);{
+        PedButtonPressed = true;
+      }*/
+       /*if (state == 0 && readpushButton == 1){
+    //if (waitMillis(3000)) {
+      statusLight (LOW, LOW, HIGH);
+      Serial.println (" nlue");
+    //}
+    }*/
+  /*
+    if (readpushButton == 1){
+      if (state == 0);{
+        PedButtonPressed = true;
+      }*/
+  //if (state == 0 && PedButtonPressed == 0) {
+  //state = 5
+  //PedButtonPressed = true;
+  //if (PedButtonPressed = true) {
+  //Serial.println ("BUTTON");
+  //if (waitMillis(A)) {
+  // Serial.println ("BLUE");
+  // statusLight(LOW, LOW, HIGH);
+  //  }
+  //}
+  // }
+ if (val == 0) {
+    //Serial.println (" Detected");
+    if (state == 0) {
+      state = 1;
+    }
+
+  } else if (state == 0 && readpushButton == 1 ) {
+    statusLight (HIGH, LOW, LOW);
+   // Serial.println (" NOT Detected");
+  } 
+  if (readpushButton == 0) {
+    if (state == 0); {
+      //Serial.println (" pressed");
+      PedButtonPressed = true;
+    } if (PedButtonPressed = true) {
+      
+      if (state == 0 && readpushButton == 0 ) {
+       // Serial.println (" blue");
+          statusLight (LOW, LOW, HIGH);
+          if (waitMillis(5000)){
+          //  Serial.println (" back");
+          readpushButton == 1;
+          }
+
+      }
+    }
+  }
+  /*if (PedButtonPressed = true) {
+    if (state == 0 && readpushButton == 0 ) {
+      statusLight (LOW, LOW, HIGH);
+    }
+    }*/
+
+    /* if (val == 0) {
+    Serial.println (" Detected");
+    if (state == 0) {
+      state = 1;
+    }
+
+  } else if (state == 0 && buttonState == false ) {
+    statusLight (HIGH, LOW, LOW);
+    //Serial.println (" NOT Detected");
+  } else if (buttonState == true ) {
+    Serial.println ("BUTTON");
+    if (waitMillisX(3000)) {
+      Serial.println ("wait complete");
+      statusLight(LOW, LOW, HIGH);
+      
+     if (waitMillisY(3333)) {
+        blinkBLUE(5);
+        Serial.println ("blinking complete");
+        //buttonState = false;
+        if (waitMillisZ(1666)) {
+          //buttonState = false;
+          Serial.println ("button state flase");
+        }
+      }
+    }*/
+
+
+  if (state == 1 && progress <= MOVING_TIME) {
+    int angle = map(progress, 0, MOVING_TIME, startAngle, stopAngle);
+    myServo.write(angle);
+    blinkRED(5);
+  } else if (state == 1) {
+    state = 2;
+    moveStartTime = currentMillis;
+    //Serial.println("Going Up");
+  }
+  if (state == 2 && progress <= STOP_TIME) {
+    myServo.write(stopAngle);
+    statusLight(LOW, HIGH, LOW);
+    //Serial.println("OPEN");
+  } else if (state == 2) {
+    state = 3;
+    moveStartTime = currentMillis;
+    //Serial.println("Stop Time Elapsed");
+  }
+
+  if (state == 3 && val == 0) {
+    myServo.write(stopAngle);
+    statusLight(LOW, HIGH, LOW);
+    //Serial.println("OPEN, DETECTED");
+  } else if (state == 3 && val == 1 && progress <= STOP_TIME) {
+    myServo.write(stopAngle);
+    blinkGREEN(5);
+   // Serial.println("OPEN, NOT DETECTED");
+  } else if (state == 3 && val == 1 && progress > STOP_TIME) {
+    state = 4;
+    blinkGREEN(5);
+    moveStartTime = currentMillis;
+    //Serial.println("Move on");
+    moveStartTime = millis();
+    progress = 0;
+  }
+
+
+
+  if (state == 4 && progress <= MOVING_TIME ) {
+    blinkRED(5);
+    int angle = map(progress , 0, MOVING_TIME, stopAngle, startAngle);
+    myServo.write(angle);
+    //Serial.println("CLOSING");
+    //Serial.println(progress);
+  } else {
+    if (state == 4 && progress > MOVING_TIME ) {
+      moveStartTime = currentMillis;
+    //  Serial.println("DONE");
+      //Serial.println(progress);
+      state = 0;
+    }
+  }
+
+}
+////////////////
+// for millis delay
+bool waitMillis(int interval) { //interval= required duration of each state
+  //bool will return true only when desired interavl has passed
+  unsigned long t;
+  bool result = false;
+
+  if (waitStarted == false) {
+    waitStarted = true;
+    startMillis = millis(); //setting the start point for the wait
+  }
+
+  t = millis();
+  if (t >= startMillis + interval) {
+    result = true;
+    startMillis = t;
+    waitStarted = false;
+  }
+  //Serial.println(" startMillis " + String(startMillis) + " waitStarted " + String(waitStarted) + " result " + String(result));
+  return result; //keeping returning false until interval has been reached
+}
+
+// creating function for traffic led state for neater code
+void statusLight (bool rVal, bool gVal, bool bVal) { // boolean of light will be passed in here, which is constantly being checked in checkRGBandLDR() function
+  digitalWrite(pinR, rVal);
+  digitalWrite(pinG, gVal);
+  digitalWrite(pinB, bVal);
+}
+//RED Blinking
+void blinkRED(int hertz) {
+  int ms = round(1000 / hertz);
+  unsigned long t; //used unsigned long to hold bigger value of ms
+  if (waitStartedB == false) {
+    waitStartedB = true;
+    startMillisB = millis();
+  }
+  t = millis();
+  if (t >= startMillisB + ms) {
+    digitalWrite(pinR, !digitalRead(pinR));// reads current value of LED and inverts it and send info back to set it
+    digitalWrite(pinG, LOW);
+    digitalWrite(pinB, LOW);
+
+
+    //Serial.println("blinking...." + String(digitalRead(redPedestrian)));
+    startMillisB = t;
+    waitStartedB = false;
+  }
+}
+//GREEN blink
+void blinkGREEN(int hertz) {
+  int ms = round(1000 / hertz);
+  unsigned long t; //used unsigned long to hold bigger value of ms
+  if (waitStartedB == false) {
+    waitStartedB = true;
+    startMillisB = millis();
+  }
+  t = millis();
+  if (t >= startMillisB + ms) {
+    digitalWrite(pinG, !digitalRead(pinG));// reads current value of LED and inverts it and send info back to set it
+    digitalWrite(pinR, LOW);
+    digitalWrite(pinB, LOW);
+    //Serial.println("blinking...." + String(digitalRead(redPedestrian)));
+    startMillisB = t;
+    waitStartedB = false;
+  }
+}
+
+//blue blink
+void blinkBLUE(int hertz) {
+  int ms = round(1000 / hertz);
+  unsigned long t; //used unsigned long to hold bigger value of ms
+  if (waitStartedB == false) {
+    waitStartedB = true;
+    startMillisB = millis();
+  }
+  t = millis();
+  if (t >= startMillisB + ms) {
+    digitalWrite(pinB, !digitalRead(pinB));// reads current value of LED and inverts it and send info back to set it
+    digitalWrite(pinG, LOW);
+    digitalWrite(pinR, LOW);
+    //Serial.println("blinking...." + String(digitalRead(redPedestrian)));
+    startMillisB = t;
+    waitStartedB = false;
+  }
+}
